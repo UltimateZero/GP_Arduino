@@ -5,8 +5,8 @@
   #define LEVER_SWITCH_PIN 6
   #define echoPin 3 // Echo Pin
   #define trigPin 2 // Trigger Pin
-  #define SSID "Santos"
-  #define PASS "midomaney93"
+  #define SSID "ssid"
+  #define PASS "password"
   #define DST_IP "192.168.1.4"
   #define DST_PORT 54321
   #define MiddleRate 25
