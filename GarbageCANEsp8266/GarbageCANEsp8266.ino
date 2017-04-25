@@ -39,13 +39,14 @@ void setup() {
     Serial.println("Connected to WiFi");
   }
   delay(1000);
-  Serial.print("Connecting to ");
-  Serial.println(DST_IP);
+
 
   //  connectToServer();
 }
 
 int connectToServer() {
+  Serial.print("Connecting to ");
+  Serial.println(DST_IP);
   int retVal;
   while ((retVal = client.connect(DST_IP, DST_PORT)) <= 0)
   {
