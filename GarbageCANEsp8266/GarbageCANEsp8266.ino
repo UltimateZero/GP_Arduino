@@ -6,19 +6,21 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define trigPin 2 // Trigger Pin
 #define SSID "ssid"
 #define PASS "password"
-#define DST_IP "192.168.1.4"
-#define DST_PORT 54321
+#define SRC_PORT 54321
 #define MiddleRate 25
 #define FullRate 5
 #define CANCapacity 100
 
 const int BinId = 123;
 int pressSwitch = 0;
-ESP8266Client client;
+
+ESP8266Server server = ESP8266Server(SRC_PORT);
 
 void setup() {
   //LCD and switch
   lcd.begin(16, 2);
+  lcd.clear();
+  lcd.print("Setting up..");
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(LEVER_SWITCH_PIN, INPUT);
@@ -40,32 +42,50 @@ void setup() {
   }
   delay(1000);
 
-
-  //  connectToServer();
+  serverSetup();
 }
 
-int connectToServer() {
-  Serial.print("Connecting to ");
-  Serial.println(DST_IP);
-  int retVal;
-  while ((retVal = client.connect(DST_IP, DST_PORT)) <= 0)
+
+void serverSetup() {
+  server.begin();
+  Serial.print("Server started! Go to ");
+  IPAddress localIp = esp8266.localIP();
+  Serial.println(localIp);
+  Serial.println();
+  lcd.setCursor(0, 1);
+  lcd.print(localIp[2] + "." + localIp[3]);
+}
+
+void serverReceive()
+{
+  // available() is an ESP8266Server function which will
+  // return an ESP8266Client object for printing and reading.
+  // available() has one parameter -- a timeout value. This
+  // is the number of milliseconds the function waits,
+  // checking for a connection.
+  ESP8266Client client = server.available(500);
+
+  if (client)
   {
-    Serial.print("Failed to connect to server. ");
-    Serial.println((retVal == -1 ? "Timeout" : "Fail"));
+    Serial.println("Client Connected!");
+    while (client.connected())
+    {
+      sendCapacity(client);
+      client.stop();
+    }
   }
-  Serial.println("Connected to server successfully");
-  return 1;
+
 }
 
-void sendCapacity() {
-  if (connectToServer() == 1) {
-    client.print(calculatePercentage());
-    client.stop();
-  }
+void sendCapacity(ESP8266Client client) {
+  client.print(calculatePercentage());
+  delay(2000);
 }
 
 void loop() {
-
+  // Wait for client connections
+  serverReceive();
+  // Print on LCD
   pressSwitch = digitalRead(LEVER_SWITCH_PIN);
   if (pressSwitch)
   {
@@ -74,25 +94,21 @@ void loop() {
     if (distance <= FullRate)
     {
       render("Full", "Closed", distance);
-      sendCapacity();
     }
     else if (distance <= MiddleRate && distance > FullRate)
     {
       render("Available", "Closed", distance);
-      sendCapacity();
     }
     else if (distance > MiddleRate)
     {
       render("Available", "Closed", distance);
-      sendCapacity();
     }
   }
   else
   {
     render("Please close", "Opened", 0);
-    sendCapacity();
   }
-  delay(5000);
+  delay(1000);
 }
 
 
