@@ -6,7 +6,7 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define trigPin 2 // Trigger Pin
 #define SSID "ssid"
 #define PASS "password"
-#define DST_IP "firebase-test.eu-gb.mybluemix.net"
+#define DST_IP "5.10.124.141" //bluemix server
 #define DST_PORT 80
 #define MiddleRate 25
 #define FullRate 5
@@ -42,6 +42,9 @@ void setup() {
       delay(1000);
     Serial.println("Connected to WiFi");
   }
+  else {
+    Serial.println("Already Connected to WiFi");
+  }
   delay(1000);
 
 //  clientSetup();
@@ -57,30 +60,38 @@ void sendCapacity() {
   int retVal = client.connect(DST_IP, DST_PORT);
   if (retVal <= 0)
   {
-    Serial.println(F("Failed to connect to server."));
+    Serial.print(F("Failed to connect to server. Code: "));
+    Serial.println(retVal);
     return;
   }
-
+  Serial.println("Connect to server successfully");
   // print and write can be used to send data to a connected
   // client connection.
   client.print(getCapacityHttp());
-
+  delay(3000);
     // available() will return the number of characters
   // currently in the receive buffer.
-  while (client.available())
-    Serial.write(client.read()); // read() gets the FIFO char
+  receivePackets();
   
   // connected() is a boolean return value - 1 if the 
   // connection is active, 0 if it's closed.
-  if (client.connected())
-    client.stop(); // stop() closes a TCP connection.
+//  if (client.connected())
+//    client.stop(); // stop() closes a TCP connection.
+}
+
+void receivePackets() {
+    while (client.available())
+      Serial.write(client.read()); // read() gets the FIFO char
+  
 }
 
 
-void getCapacityHttp() {
-   String httpRequest = "GET /getBinUpdate.php?id=1&capacity="+calculatePercentage()+" HTTP/1.1\n"
-                           "Host: firebase-test.eu-gb.mybluemix.net\n"
-                           "Connection: close\n\n";
+String getCapacityHttp() {
+   String httpRequest = "GET /getBinUpdate.php?id=1&capacity=";
+   httpRequest += calculatePercentage();
+   httpRequest += " HTTP/1.1\r\n";
+   httpRequest += "Host: firebase-test.eu-gb.mybluemix.net\r\n";
+   httpRequest += "Connection: close\r\n\r\n";
    return httpRequest;
 }
 
@@ -111,7 +122,14 @@ void loop() {
 //  {
 //    render("Please close", "Opened", 0);
 //  }
-//  delay(1000);
+  if(client.connected()) {
+    receivePackets();
+  }
+  else {
+    sendCapacity(); //start
+  }
+  
+  delay(1000);
 }
 
 
