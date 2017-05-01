@@ -6,7 +6,7 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 #define trigPin 2 // Trigger Pin
 #define SSID "ssid"
 #define PASS "password"
-#define DST_IP "5.10.124.141" //bluemix server
+#define DST_IP "54.247.71.175" //heroku server
 #define DST_PORT 80
 #define MiddleRate 25
 #define FullRate 5
@@ -14,7 +14,7 @@ LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
 
 
-const int BinId = 123;
+const int BinId = 1;
 int pressSwitch = 0;
 
 ESP8266Client client;
@@ -22,7 +22,7 @@ void setup() {
   //LCD and switch
   lcd.begin(16, 2);
   lcd.clear();
-  lcd.print("Setting up.. Id=123");
+  lcd.print("Setting up.. Id=1");
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(LEVER_SWITCH_PIN, INPUT);
@@ -87,11 +87,11 @@ void receivePackets() {
 
 
 String getCapacityHttp() {
-   String httpRequest = "GET /getBinUpdate.php?id=1&capacity=";
+   String httpRequest = "GET /api/bins/1?&open=false&capacity=";
    httpRequest += calculatePercentage();
    httpRequest += " HTTP/1.1\r\n";
-   httpRequest += "Host: firebase-test.eu-gb.mybluemix.net\r\n";
-   httpRequest += "Connection: close\r\n\r\n";
+   httpRequest += "Host: aast.voidbits.co\r\n";
+   httpRequest += "Connection: keep-alive\r\n\r\n";
    return httpRequest;
 }
 
@@ -123,9 +123,11 @@ void loop() {
 //    render("Please close", "Opened", 0);
 //  }
   if(client.connected()) {
+    Serial.println("Is connected");
     receivePackets();
   }
   else {
+    Serial.println("Not connected. Sending..");
     sendCapacity(); //start
   }
   
